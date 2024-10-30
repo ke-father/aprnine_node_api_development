@@ -2,7 +2,7 @@
 const {
   Model
 } = require('sequelize');
-const moment = require('moment')
+const moment = require('moment/moment')
 moment.locale('zh-cn')
 
 module.exports = (sequelize, DataTypes) => {
@@ -88,13 +88,13 @@ module.exports = (sequelize, DataTypes) => {
     createdAt: {
       type: DataTypes.DATE,
       get () {
-        return moment(this.getDataValue(Course.createdAt).format('LL'))
+        return moment(this.getDataValue(Course.createdAt)).format('LL')
       },
     },
     updatedAt: {
       type: DataTypes.DATE,
       get () {
-        return moment(this.getDataValue(Course.updatedAt).format('LL'))
+        return moment(this.getDataValue(Course.updatedAt)).format('LL')
       }
     }
   }, {
