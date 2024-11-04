@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router()
+const userAuth = require('../../middlewares/user-auth')
 
 // / 主页路由
 router.use('/', require('./home'))
@@ -24,5 +25,11 @@ router.use('/search', require('./search'))
 
 // /auth 登录
 router.use('/auth', require('./auth'))
+
+// /user 用户
+router.use('/users', userAuth, require('./user'))
+
+// /likes 点赞
+router.use('/likes', userAuth, require('./likes'))
 
 module.exports = router

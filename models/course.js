@@ -24,6 +24,13 @@ module.exports = (sequelize, DataTypes) => {
       models.Course.hasMany(models.Chapter, {
         as: 'chapters'
       })
+      // 多对多关联
+      models.Course.belongsToMany(models.User, {
+        // 中间表
+        through: models.Like,
+        foreignKey: 'courseId',
+        as: 'likeUsers'
+      })
     }
   }
   Course.init({

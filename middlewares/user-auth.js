@@ -11,15 +11,8 @@ module.exports = async (req, res, next) => {
         // 验证token
         const { userId } = jwt.verify(token, process.env.JWT_SECRET);
 
-        // 获取用户
-        const user = await User.findByPk(userId);
-        if (!user) throw new UnauthorizedError('用户不存在');
-
-        // 判断用户身份
-        if (user.role !== ROLES.ADMIN) throw new UnauthorizedError('您没有权限访问该接口');
-
         // 保存用户
-        req.user = user;
+        req.userId = userId;
 
         next();
     } catch (error) {
