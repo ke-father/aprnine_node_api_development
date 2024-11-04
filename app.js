@@ -22,7 +22,6 @@ const corsOptions = {
     // origin: ['http://localhost:3000'],
     // origin: 'http://aprnine.cloud'
 }
-
 app.use(cors(corsOptions))
 
 app.use('/', indexRouter);
