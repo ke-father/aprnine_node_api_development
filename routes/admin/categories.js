@@ -3,7 +3,8 @@ const router = express.Router();
 // 引入模型
 const { Category, Course } = require('../../models')
 const { Op } = require('sequelize')
-const { NotFoundError, successResponse, failureResponse} = require('../../utils')
+const { successResponse, failureResponse} = require('../../utils')
+const createHttpError = require("http-errors");
 
 // 查询分类列表
 router.get('/', async (req, res) => {
@@ -11,47 +12,27 @@ router.get('/', async (req, res) => {
         // 获取查询参数
         const query = req.query
 
-        // 获取分页参数 当前页
-        const pages = {
-            // 当前页
-            currentPage: Math.abs(Number(query.currentPage))|| 1,
-            // 页面显示数据条数
-            pageSize: Math.abs(Number(query.pageSize)) || 10
-        }
-
-        // 计算偏移量
-        const offset = (pages.currentPage - 1) * pages.pageSize
-
         // 定义查询条件
         const condition = {
             // 排序
-            order: [['rank', 'ASC'], ['id', 'ASC']],
-            // 查询查询条数 pageSize
-            limit: pages.pageSize,
-            // 偏移量
-            offset
+            order: [['rank', 'ASC'], ['id', 'ASC']]
         }
 
-        query.name
-            && (
-                condition.where = {
-                    name: {
-                        [Op.like]: `%${query.name}%`
-                    }
-                }
-            )
+        const queryType = {
+            name: () => ({ [Op.like]: `%${query.name}%` })
+        }
 
-        // 获取数据库内容
-        const { count, rows } = await Category.findAndCountAll(condition)
-
-        successResponse(res, '查询成功', {
-            categories: rows,
-            pagination: {
-                total: count,
-                currentPage: pages.currentPage,
-                pageSize: pages.pageSize
+        Object.keys(query).map(key => {
+            if (key in queryType) {
+                if (!('where' in condition)) condition.where = {}
+                condition.where[key] = queryType[key]()
             }
         })
+
+        // 获取数据库内容
+        const data = await Category.findAll(condition)
+
+        successResponse(res, '查询成功', data)
     } catch (e) {
         failureResponse(res, e, '查询分类列表失败')
     }
@@ -77,7 +58,8 @@ router.delete('/:id', async (req, res) => {
 
         // 获取分类下的课程 如果存在课程则无法删除
         const count = await Course.count({ where: { categoryId: req.params.id } })
-        if (count > 0) throw new Error('该分类下有课程，无法删除')
+        if (count > 0) throw new createHttpError.Conflict('该分类下有课程，无法删除')
+        // if (count > 0) throw new Error('该分类下有课程，无法删除')
 
         // 删除分类
         // await Category.destroy({
@@ -127,7 +109,7 @@ const getCategory = async (req) => {
     const category = await Category.findByPk(id)
 
     // 分类未找到 抛出错误
-    if (!category) throw new NotFoundError(`ID: ${id} 的分类未找到`)
+    if (!category) throw new  createHttpError.NotFound(`ID: ${id} 的分类未找到`)
 
     return category
 

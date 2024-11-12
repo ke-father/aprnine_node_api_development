@@ -3,7 +3,8 @@ const router = express.Router();
 // 引入模型
 const { Article } = require('../../models')
 const { Op } = require('sequelize')
-const { NotFoundError, successResponse, failureResponse} = require('../../utils')
+const { successResponse, failureResponse} = require('../../utils')
+const createHttpError = require("http-errors");
 
 // 查询文章列表
 router.get('/', async (req, res) => {
@@ -32,14 +33,16 @@ router.get('/', async (req, res) => {
             offset
         }
 
-        query.title
-            && (
-                condition.where = {
-                    title: {
-                        [Op.like]: `%${query.title}%`
-                    }
-                }
-            )
+        const queryType = {
+            title: () => ({ [Op.like]: `%${query.title}%` })
+        }
+
+        Object.keys(query).map(key => {
+            if (key in queryType) {
+                if (!('where' in condition)) condition.where = {}
+                condition.where[key] = queryType[key]()
+            }
+        })
 
         // 获取数据库内容
         const { count, rows } = await Article.findAndCountAll(condition)
@@ -123,7 +126,7 @@ const getArticle = async (req) => {
     const article = await Article.findByPk(id)
 
     // 文章未找到 抛出错误
-    if (!article) throw new NotFoundError(`ID: ${id} 的文章未找到`)
+    if (!article) throw new createHttpError.NotFound(`ID: ${id} 的文章未找到`)
 
     return article
 

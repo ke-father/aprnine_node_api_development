@@ -3,7 +3,8 @@ const router = express.Router();
 // 引入模型
 const { Course, Category, User, Chapter } = require('../../models')
 const { Op } = require('sequelize')
-const { NotFoundError, successResponse, failureResponse} = require('../../utils')
+const { successResponse, failureResponse} = require('../../utils')
+const createHttpError = require("http-errors");
 
 // 查询课程列表
 router.get('/', async (req, res) => {
@@ -88,7 +89,7 @@ router.delete('/:id', async (req, res) => {
 
         // 获取分类下的课程 如果存在课程则无法删除
         const count = await Chapter.count({ where: { courseId: req.params.id } })
-        if (count > 0) throw new Error('当前课程有章节，无法删除')
+        if (count > 0) throw new createHttpError.Conflict('当前课程有章节，无法删除')
 
         // 删除课程
         // await Course.destroy({
@@ -165,7 +166,7 @@ const getCourse = async (req) => {
     const course = await Course.findByPk(id, condition)
 
     // 课程未找到 抛出错误
-    if (!course) throw new NotFoundError(`ID: ${id} 的课程未找到`)
+    if (!course) throw new  createHttpError.NotFound(`ID: ${id} 的课程未找到`)
 
     return course
 

@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const {Chapter, Course, User} = require('../../models')
-const {NotFoundError, successResponse, failureResponse} = require('../../utils')
+const {successResponse, failureResponse} = require('../../utils')
+const createHttpError = require("http-errors");
 
 router.get('/:id', async (req, res) => {
     try {
@@ -30,7 +31,7 @@ router.get('/:id', async (req, res) => {
             attributes: { exclude: ['CourseId'] },
         });
 
-        if (!chapter) throw new NotFoundError(`id为${id}的章节未找到`)
+        if (!chapter) throw new  createHttpError.NotFound(`id为${id}的章节未找到`)
 
         // 查询章节关联的课程
         const course = await chapter.getCourse({

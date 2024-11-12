@@ -1,4 +1,5 @@
 module.exports = {
-    ...require('./errors'),
-    ...require('./responses')
+    ...require('./responses'),
+    ...require('./validate'),
+    upload: require('./aliyun')
 }

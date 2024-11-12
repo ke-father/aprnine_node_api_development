@@ -3,6 +3,8 @@ const {
     Model
 } = require('sequelize');
 const moment = require("moment/moment");
+const { URL_REG } = require('../utils')
+
 moment.locale('zh-cn')
 module.exports = (sequelize, DataTypes) => {
     class Chapter extends Model {
@@ -47,7 +49,9 @@ module.exports = (sequelize, DataTypes) => {
             video: {
                 type: DataTypes.STRING,
                 validate: {
-                    isUrl: {msg: '视频地址不正确。'}
+                    isUrl (value) {
+                        if (value && !URL_REG.test(value)) throw new Error('视频链接格式不正确。')
+                    }
                 }
             },
             rank: {

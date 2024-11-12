@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 // 引入模型
 const { Setting } = require('../../models')
-const { NotFoundError, successResponse, failureResponse} = require('../../utils')
+const { successResponse, failureResponse} = require('../../utils')
+const createHttpError = require("http-errors");
 
 // 更新系统设置
 router.put('/', async (req, res) => {
@@ -37,7 +38,7 @@ const getSetting = async () => {
     const setting = await Setting.findOne()
 
     // 系统设置未找到 抛出错误
-    if (!setting) throw new NotFoundError(`初始系统设置未找到，请运行种子文件。`)
+    if (!setting) throw new  createHttpError.NotFound(`初始系统设置未找到，请运行种子文件。`)
 
     return setting
 

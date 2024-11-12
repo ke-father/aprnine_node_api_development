@@ -4,6 +4,7 @@ const {
 } = require('sequelize');
 // 引入加密
 const bcrypt = require('bcryptjs')
+const createHttpError = require("http-errors");
 
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
@@ -72,7 +73,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       set (value) {
         if (value.length >= 6 && value.length <= 45) this.setDataValue('password', bcrypt.hashSync(value, 10))
-        else throw new Error('密码长度需要在6 ~ 45个字符之间')
+        else throw new createHttpError.BadRequest('密码长度需要在6 ~ 45个字符之间')
       }
     },
     nickname: {

@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router()
 const { User } = require('../../models');
-const { BadRequestError, NotFoundError, successResponse, failureResponse } = require("../../utils");
+const { successResponse, failureResponse } = require("../../utils");
+const createHttpError = require("http-errors");
 const bcrypt = require('bcryptjs');
 
 /**
@@ -40,15 +41,15 @@ router.put('/account', async (req, res) => {
         const body = {}
         keywords.map(key => body[key] = req.body[key])
 
-        if (!body['current_password']) throw new BadRequestError('当前密码必须填写。')
+        if (!body['current_password']) throw new  createHttpError.BadRequest('当前密码必须填写。')
 
-        if (body['passwordConfirmation'] !== body['password']) throw new BadRequestError('两次输入的密码不一致')
+        if (body['passwordConfirmation'] !== body['password']) throw new  createHttpError.BadRequest('两次输入的密码不一致')
 
         // 获取用户信息与密码
         const user = await getUser(req, true)
 
         const isPasswordValid = bcrypt.compareSync(body['current_password'], user.password)
-        if (!isPasswordValid) throw new BadRequestError('当前密码不正确。')
+        if (!isPasswordValid) throw new  createHttpError.BadRequest('当前密码不正确。')
 
         await user.update(body)
         delete user.dataValues.password
@@ -71,7 +72,7 @@ async function getUser(req, showPassword = false) {
 
     const user = await User.findByPk(id, condition);
 
-    if (!user)  throw new NotFoundError(`ID: ${ id }的用户未找到。`)
+    if (!user)  throw new  createHttpError.NotFound(`ID: ${ id }的用户未找到。`)
 
     return user;
 }

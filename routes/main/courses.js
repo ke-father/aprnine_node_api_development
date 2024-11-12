@@ -1,7 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const { Course, Category, Chapter, User } = require('../../models')
-const { failureResponse, successResponse, NotFoundError } = require('../../utils')
+const { failureResponse, successResponse } = require('../../utils')
+const createHttpError = require("http-errors");
 
 // 获取课程列表
 router.get('/', async (req, res) => {
@@ -20,7 +21,7 @@ router.get('/', async (req, res) => {
         const offset = (pages.currentPage - 1) * pages.pageSize
 
         // 判断是否传入分类Id
-        if (!query.categoryId) throw new Error('获取课程列表失败，分类ID不能为空')
+        if (!query.categoryId) throw new createHttpError.BadRequest('获取课程列表失败，分类ID不能为空')
 
         // 定义查询条件
         const condition = {
@@ -77,7 +78,7 @@ router.get('/:id', async (req, res) => {
 
         const course = await Course.findByPk(id, condition)
 
-        if (!course) throw new NotFoundError(`id为${id}的课程未找到`)
+        if (!course) throw new  createHttpError.NotFound(`id为${id}的课程未找到`)
 
         successResponse(res, '查询课程成功', { course })
     } catch (e) {

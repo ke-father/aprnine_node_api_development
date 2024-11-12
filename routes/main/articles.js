@@ -1,7 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const { Article } = require('../../models')
-const { NotFoundError, successResponse, failureResponse} = require('../../utils')
+const { successResponse, failureResponse} = require('../../utils')
+const createHttpError = require("http-errors");
 
 // 获取文章列表
 router.get('/', async (req, res) => {
@@ -47,7 +48,7 @@ router.get('/:id', async (req, res) => {
 
         const article = await Article.findByPk(id)
 
-        if (!article) throw new NotFoundError(`ID: ${id} 的文章未找到`)
+        if (!article) throw new  createHttpError.NotFound(`ID: ${id} 的文章未找到`)
 
         successResponse(res, '查询成功', {article})
     } catch (e) {

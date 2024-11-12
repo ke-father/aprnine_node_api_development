@@ -1,7 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const { Like, Course, User } = require('../../models')
-const { successResponse, failureResponse, NotFoundError } = require('../../utils')
+const { successResponse, failureResponse } = require('../../utils')
+const createHttpError = require("http-errors");
 
 // 点赞、取消点赞
 router.post('/', async (req, res) => {
@@ -11,7 +12,7 @@ router.post('/', async (req, res) => {
 
         // 查找课程
         const course = await Course.findByPk(courseId)
-        if (!course) throw new NotFoundError('课程不存在')
+        if (!course) throw new  createHttpError.NotFound('课程不存在')
 
         // 获取点赞
         const like = await Like.findOne({

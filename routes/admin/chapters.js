@@ -3,7 +3,8 @@ const router = express.Router();
 // 引入模型
 const {Chapter, Course} = require('../../models')
 const {Op} = require('sequelize')
-const {NotFoundError, successResponse, failureResponse} = require('../../utils')
+const {successResponse, failureResponse} = require('../../utils')
+const createHttpError = require("http-errors");
 
 // 查询章节列表
 router.get('/', async (req, res) => {
@@ -23,7 +24,7 @@ router.get('/', async (req, res) => {
         const offset = (pages.currentPage - 1) * pages.pageSize
 
         // 定义查询条件
-        if (!query.courseId) throw new Error('获取章节列表失败，课程ID不能为空')
+        if (!query.courseId) throw new createHttpError.BadRequest('获取章节列表失败，课程ID不能为空')
 
         // 定义查询条件
         const condition = {
@@ -70,6 +71,8 @@ router.post('/', async (req, res) => {
     try {
         // 创建章节
         const chapter = await Chapter.create(filterBody(req.body))
+        // 对应课程中 章节数量统计+1
+        await Course.increment('chaptersCount', { where: { id: chapter.courseId } })
 
         successResponse(res, '创建成功', chapter, 201)
     } catch (e) {
@@ -88,6 +91,9 @@ router.delete('/:id', async (req, res) => {
         //     where: { id }
         // })
         await chapter.destroy()
+
+        // 删除章节成功后，对应课程中 章节数量统计-1
+        await Course.decrement('chaptersCount', { where: { id: chapter.courseId } })
 
         successResponse(res, '删除成功')
     } catch (e) {
@@ -149,7 +155,7 @@ const getChapter = async (req) => {
     const chapter = await Chapter.findByPk(id, condition)
 
     // 章节未找到 抛出错误
-    if (!chapter) throw new NotFoundError(`ID: ${id} 的章节未找到`)
+    if (!chapter) throw new  createHttpError.NotFound(`ID: ${id} 的章节未找到`)
 
     return chapter
 

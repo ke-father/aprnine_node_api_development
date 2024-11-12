@@ -1,4 +1,5 @@
-const { UnauthorizedError, NotFoundError, BadRequestError } = require('./errors')
+const createError = require('http-errors')
+const multer = require('multer')
 
 /**
  * 请求成功
@@ -23,30 +24,35 @@ const successResponse = (res, message, data = {}, code = 200) => {
  * @param message
  */
 const failureResponse = (res, error, message = '服务器错误') => {
-    const setBody = (status, message, errors) => {
-        res.status(status)
-            .json({
-                status: false,
-                message,
-                errors
-            })
+    console.log(error)
+    try {
+        const setBody = (status, message, errors) => {
+            res.status(status)
+                .json({
+                    status: false,
+                    message,
+                    errors: Array.isArray(errors) ? errors : [errors]
+                })
+        }
+
+        const errorMap = new Map([
+            // 验证错误
+            ['SequelizeValidationError', () => setBody(400, '请求参数错误', error.errors.map(e => e.message))],
+            ['JsonWebTokenError', () => setBody(401, '认证失败', ['您提交的token错误'])],
+            ['TokenExpiredError', () => setBody(401, '认证失败', ['您提交的token已过期'])],
+            ['MulterError', () => setBody(413, '上传文件大小超出限制', ['上传文件过大'])],
+            ['default', () => setBody(500, message, [error.message])],
+        ])
+
+        if (createError.isHttpError(error)) setBody(error.status, '请求失败', error.message)
+        else {
+            const errorObject = errorMap.get(error.name)
+            if (errorObject) errorObject()
+            else errorMap.get('default')()
+        }
+    } catch (e) {
+        console.log(e)
     }
-
-    const errorMap = new Map([
-        // 验证错误
-        ['SequelizeValidationError', () => setBody(400, '请求参数错误', error.errors.map(e => e.message))],
-        ['JsonWebTokenError', () => setBody(401, '认证失败', ['您提交的token错误'])],
-        ['TokenExpiredError', () => setBody(401, '认证失败', ['您提交的token已过期'])],
-        [BadRequestError.name, () => setBody(400, '请求参数错误', [error.message])],
-        [UnauthorizedError.name, () => setBody(401, '认证失败', [error.message])],
-        // 自定义错误
-        [NotFoundError.name, () => setBody(404, '资源不存在', [error.message])],
-        ['default', () => setBody(500, message, [error.message])],
-    ])
-
-
-    const errorObject = errorMap.get(error.name)
-    errorObject ? errorObject() : errorMap.get('default')()
 }
 
 module.exports = {

@@ -3,7 +3,6 @@ const router = express.Router();
 const { sequelize, User } = require('../../models');
 const { Op } = require("sequelize");
 const {
-    NotFoundError,
     successResponse,
     failureResponse
 } = require('../../utils')
