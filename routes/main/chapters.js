@@ -3,51 +3,44 @@ const router = express.Router();
 const {Chapter, Course, User} = require('../../models')
 const {successResponse, failureResponse} = require('../../utils')
 const createHttpError = require("http-errors");
+const {getKey, setKey} = require("../../utils/redis");
 
 router.get('/:id', async (req, res) => {
     try {
         const {id} = req.params
 
-        // const condition = {
-        //     attributes: {exclude: ['CourseId']},
-        //     include: [
-        //         {
-        //             model: Course,
-        //             as: 'course',
-        //             attributes: ['id', 'name'],
-        //             include: [
-        //                 {
-        //                     model: User,
-        //                     as: 'user',
-        //                     attributes: ['id', 'username', 'nickname', 'avatar', 'company']
-        //                 }
-        //             ]
-        //         }
-        //     ]
-        // }
-
-        // 查询当前章节
-        const chapter = await Chapter.findByPk(id, {
+        // 查询章节
+        let CHAPTER_KEY = `CHAPTER_KEY:${id}`
+        let chapter = await getKey(CHAPTER_KEY)
+        if (!chapter) chapter = await Chapter.findByPk(id, {
             attributes: { exclude: ['CourseId'] },
-        });
-
+        })
         if (!chapter) throw new  createHttpError.NotFound(`id为${id}的章节未找到`)
 
         // 查询章节关联的课程
-        const course = await chapter.getCourse({
-            attributes: ['id', 'name', 'userId'],
-        });
+        let COURSE_KEY = `COURSE_KEY:${chapter.courseId}`
+        let course = await getKey(COURSE_KEY)
+        if (!course) course = await Course.findByPk(chapter.courseId, {
+            attributes: { exclude: ['CategoryId', 'UserId'] },
+        })
+        await setKey(COURSE_KEY, course)
 
-        const user = await course.getUser({
+        let USER_KEY = `USER_KEY:${course.userId}`
+        let user = await getKey(USER_KEY)
+        if (!user) user = await User.findByPk(course.userId, {
             attributes: ['id', 'username', 'nickname', 'avatar', 'company']
         })
+        await setKey(USER_KEY, user)
 
         // 查询同一课程下的其他章节
-        const chapters = await Chapter.findAll({
+        let CHAPTERS_KEY = `CHAPTERS_KEY:${course.courseId}`
+        let chapters = await getKey(CHAPTERS_KEY)
+        if (!chapters) chapters = await Chapter.findAll({
             attributes: {exclude: ['CourseId', 'content']},
             where: {courseId: chapter.courseId},
             order: [['rank', 'asc'], ['id', 'desc']]
         })
+        await setKey(CHAPTERS_KEY, chapters)
 
         successResponse(res, '查询所有章节成功', {
             // 章节

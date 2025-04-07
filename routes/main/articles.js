@@ -3,6 +3,7 @@ const router = express.Router()
 const { Article } = require('../../models')
 const { successResponse, failureResponse} = require('../../utils')
 const createHttpError = require("http-errors");
+const { getKey, setKey } = require('../../utils/redis')
 
 // 获取文章列表
 router.get('/', async (req, res) => {
@@ -20,6 +21,10 @@ router.get('/', async (req, res) => {
         // 计算偏移量
         const offset = (pages.currentPage - 1) * pages.pageSize
 
+        const ARTICLES_KEY = `ARTICLES_KEY:${pages.currentPage}:${pages.pageSize}`
+        let data = await getKey(ARTICLES_KEY)
+        if (data) return successResponse(res, '查询文章列表成功', data)
+
         const condition = {
             attributes: { exclude: ['content'] },
             order: [['id', 'desc']],
@@ -28,14 +33,16 @@ router.get('/', async (req, res) => {
         }
 
         const { count, rows } = await Article.findAndCountAll(condition)
-        successResponse(res, '查询文章列表成功', {
+        data = {
             articles: rows,
             pagination: {
                 total: count,
                 currentPage: pages.currentPage,
                 pageSize: pages.pageSize
             }
-        })
+        }
+        await setKey(ARTICLES_KEY, data)
+        successResponse(res, '查询文章列表成功', data)
     } catch (e) {
         failureResponse(res, e)
     }
@@ -46,7 +53,8 @@ router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params
 
-        const article = await Article.findByPk(id)
+        let article = await getKey(`ARTICLE:${id}`)
+        if (!article) article = await Article.findByPk(id)
 
         if (!article) throw new  createHttpError.NotFound(`ID: ${id} 的文章未找到`)
 

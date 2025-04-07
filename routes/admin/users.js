@@ -5,14 +5,13 @@ const { User } = require('../../models')
 const { Op, where} = require('sequelize')
 const { successResponse, failureResponse} = require('../../utils')
 const createHttpError = require("http-errors");
+const {delKey} = require("../../utils/redis");
 
 // 查询用户列表
 router.get('/', async (req, res) => {
     try {
         // 获取查询参数
         const query = req.query
-
-        console.log(query)
 
         // 获取分页参数 当前页
         const pages = {
@@ -87,7 +86,7 @@ router.put('/:id', async (req, res) => {
 
         // 更新用户
         await user.update(filterBody(req.body))
-
+        await clearCache(user)
         successResponse(res, '更新成功', user)
     } catch (e) {
         failureResponse(res, e, '更新用户失败')
@@ -145,6 +144,11 @@ const filterBody = (body) => {
     }
 
     return returnBody
+}
+
+// 清除缓存
+const clearCache = async (user) => {
+    await delKey(`USER_KEY:${user.id}`)
 }
 
 module.exports = router

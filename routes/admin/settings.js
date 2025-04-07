@@ -4,6 +4,10 @@ const router = express.Router();
 const { Setting } = require('../../models')
 const { successResponse, failureResponse} = require('../../utils')
 const createHttpError = require("http-errors");
+const {getKey, setKey, delKey} = require("../../utils/redis");
+
+// 定义redis的key
+const SETTING_KEY = 'SETTING_KEY'
 
 // 更新系统设置
 router.put('/', async (req, res) => {
@@ -13,6 +17,8 @@ router.put('/', async (req, res) => {
 
         // 更新系统设置
         await setting.update(filterBody(req.body))
+        // 清除redis缓存内容
+        await delKey(SETTING_KEY)
 
         successResponse(res, '更新成功', setting)
     } catch (e) {
@@ -26,6 +32,8 @@ router.get('/', async (req, res) => {
         // 获取系统设置
         const setting = await getSetting()
 
+        await setKey(SETTING_KEY, setting)
+
         successResponse(res, '查询成功', setting)
     } catch (e) {
         failureResponse(res, e, '查询系统设置详情失败')
@@ -34,8 +42,12 @@ router.get('/', async (req, res) => {
 
 // 公共方法：查询当前系统设置
 const getSetting = async () => {
-    // 向数据库查询
-    const setting = await Setting.findOne()
+    // 读取缓存中的数据
+    let setting = await getKey(SETTING_KEY)
+
+    if (!setting) {
+        setting = await Setting.findOne()
+    }
 
     // 系统设置未找到 抛出错误
     if (!setting) throw new  createHttpError.NotFound(`初始系统设置未找到，请运行种子文件。`)

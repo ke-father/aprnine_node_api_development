@@ -75,6 +75,7 @@ router.post('/', async (req, res) => {
         // 创建课程
         const course = await Course.create(body)
 
+        await clearCache()
         successResponse(res, '创建成功', course, 201)
     } catch (e) {
         failureResponse(res, e, '创建课程失败')
@@ -96,7 +97,7 @@ router.delete('/:id', async (req, res) => {
         //     where: { id }
         // })
         await course.destroy()
-
+        await clearCache(course)
         successResponse(res, '删除成功')
     } catch (e) {
         failureResponse(res, e, '删除课程失败')
@@ -111,7 +112,7 @@ router.put('/:id', async (req, res) => {
 
         // 更新课程
         await course.update(filterBody(req.body))
-
+        await clearCache(course)
         successResponse(res, '更新成功', course)
     } catch (e) {
         failureResponse(res, e, '更新课程失败')
@@ -185,5 +186,24 @@ const filterBody = (body) => {
 
     return returnBody
 }
+
+const { getKeysByPattern, delKey } = require('../../utils/redis');
+
+/**
+ * 清除缓存
+ * @param course
+ * @returns {Promise<void>}
+ */
+async function clearCache(course = null) {
+    let keys = await getKeysByPattern('courses:*');
+    if (keys.length !== 0) {
+        await delKey(keys);
+    }
+
+    if (course) {
+        await delKey(`course:${course.id}`);
+    }
+}
+
 
 module.exports = router

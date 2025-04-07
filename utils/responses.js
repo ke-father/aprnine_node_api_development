@@ -1,5 +1,6 @@
 const createError = require('http-errors')
 const multer = require('multer')
+const logger = require('../utils/logger')
 
 /**
  * 请求成功
@@ -24,7 +25,6 @@ const successResponse = (res, message, data = {}, code = 200) => {
  * @param message
  */
 const failureResponse = (res, error, message = '服务器错误') => {
-    console.log(error)
     try {
         const setBody = (status, message, errors) => {
             res.status(status)
@@ -41,7 +41,10 @@ const failureResponse = (res, error, message = '服务器错误') => {
             ['JsonWebTokenError', () => setBody(401, '认证失败', ['您提交的token错误'])],
             ['TokenExpiredError', () => setBody(401, '认证失败', ['您提交的token已过期'])],
             ['MulterError', () => setBody(413, '上传文件大小超出限制', ['上传文件过大'])],
-            ['default', () => setBody(500, message, [error.message])],
+            ['default', () => {
+                logger.error('服务器错误：', error)
+                return setBody(500, message, [error.message])
+            }],
         ])
 
         if (createError.isHttpError(error)) setBody(error.status, '请求失败', error.message)
@@ -51,7 +54,7 @@ const failureResponse = (res, error, message = '服务器错误') => {
             else errorMap.get('default')()
         }
     } catch (e) {
-        console.log(e)
+        logger.error('服务器错误：', e)
     }
 }
 

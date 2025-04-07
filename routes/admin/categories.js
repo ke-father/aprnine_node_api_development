@@ -5,6 +5,8 @@ const { Category, Course } = require('../../models')
 const { Op } = require('sequelize')
 const { successResponse, failureResponse} = require('../../utils')
 const createHttpError = require("http-errors");
+const {delKey} = require("../../utils/redis");
+const { CATEGORIES_KEY } = require('../enum/CONST')
 
 // 查询分类列表
 router.get('/', async (req, res) => {
@@ -43,7 +45,7 @@ router.post('/', async (req, res) => {
     try {
         // 创建分类
         const category = await Category.create(filterBody(req.body))
-
+        await clearCache()
         successResponse(res, '创建成功', category, 201)
     } catch (e) {
         failureResponse(res, e, '创建分类失败')
@@ -66,7 +68,7 @@ router.delete('/:id', async (req, res) => {
         //     where: { id }
         // })
         await category.destroy()
-
+        await clearCache(category)
         successResponse(res, '删除成功')
     } catch (e) {
         failureResponse(res, e)
@@ -82,6 +84,7 @@ router.put('/:id', async (req, res) => {
         // 更新分类
         await category.update(filterBody(req.body))
 
+        await clearCache(category)
         successResponse(res, '更新成功', category)
     } catch (e) {
         failureResponse(res, e, '更新分类失败')
@@ -113,6 +116,12 @@ const getCategory = async (req) => {
 
     return category
 
+}
+
+const clearCache = async (category = null) => {
+    await delKey(CATEGORIES_KEY)
+
+    if (category) await delKey(`CATEGORY_KEY:${category.id}`)
 }
 
 // 公共方法：白名单过滤

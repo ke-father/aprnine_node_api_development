@@ -26,5 +26,10 @@ router.use('/charts', adminAuth, require('./charts'))
 // /admin/auth 登录
 router.use('/auth', require('./auth'))
 
+// /admin/attachments 附件
+router.use('/attachments', adminAuth, require('./attachments'))
+
+// 日志
+router.use('/logs', adminAuth, require('./logs'))
 
 module.exports = router

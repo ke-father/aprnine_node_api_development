@@ -4,6 +4,7 @@ const { User } = require('../../models');
 const { successResponse, failureResponse } = require("../../utils");
 const createHttpError = require("http-errors");
 const bcrypt = require('bcryptjs');
+const {getKey, setKey, delKey} = require("../../utils/redis");
 
 /**
  * 查询当前登录用户详情
@@ -11,7 +12,11 @@ const bcrypt = require('bcryptjs');
  */
 router.get('/me', async function (req, res) {
     try {
-        const user = await getUser(req);
+        let USER_KEY = `USER_KEY:${req.userId}`
+        let user = await getKey(USER_KEY)
+        if (!user) user = await getUser(req);
+        await setKey(USER_KEY, user)
+
         successResponse(res, '查询当前用户信息成功。', { user });
     } catch (error) {
         failureResponse(res, error);
@@ -27,7 +32,7 @@ router.put('/info', async (req, res) => {
 
         const user = await getUser(req)
         await user.update(body)
-
+        await clearCache(user)
         successResponse(res, '更新用户信息成功', { user })
     } catch (e) {
         failureResponse(req, e)
@@ -53,7 +58,7 @@ router.put('/account', async (req, res) => {
 
         await user.update(body)
         delete user.dataValues.password
-
+        await clearCache(user)
         successResponse(res, '更新账户信息成功', { user })
     } catch (e) {
         failureResponse(res, e)
@@ -75,6 +80,11 @@ async function getUser(req, showPassword = false) {
     if (!user)  throw new  createHttpError.NotFound(`ID: ${ id }的用户未找到。`)
 
     return user;
+}
+
+// 清除缓存
+const clearCache = async (user) => {
+    await delKey(`USER_KEY:${user.id}`)
 }
 
 module.exports = router;

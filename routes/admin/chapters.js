@@ -73,7 +73,7 @@ router.post('/', async (req, res) => {
         const chapter = await Chapter.create(filterBody(req.body))
         // 对应课程中 章节数量统计+1
         await Course.increment('chaptersCount', { where: { id: chapter.courseId } })
-
+        await clearCache(chapter)
         successResponse(res, '创建成功', chapter, 201)
     } catch (e) {
         failureResponse(res, e, '创建章节失败')
@@ -94,7 +94,7 @@ router.delete('/:id', async (req, res) => {
 
         // 删除章节成功后，对应课程中 章节数量统计-1
         await Course.decrement('chaptersCount', { where: { id: chapter.courseId } })
-
+        await clearCache(chapter)
         successResponse(res, '删除成功')
     } catch (e) {
         failureResponse(res, e, '删除章节失败')
@@ -110,6 +110,7 @@ router.put('/:id', async (req, res) => {
         // 更新章节
         await chapter.update(filterBody(req.body))
 
+        await clearCache(chapter)
         successResponse(res, '更新成功', chapter)
     } catch (e) {
         failureResponse(res, e, '更新章节失败')
@@ -174,5 +175,18 @@ const filterBody = (body) => {
 
     return returnBody
 }
+
+const { delKey } = require('../../utils/redis');
+
+/**
+ * 清除缓存
+ * @param chapter
+ * @returns {Promise<void>}
+ */
+async function clearCache(chapter) {
+    await delKey(`chapters:${chapter.courseId}`);
+    await delKey(`chapter:${chapter.id}`);
+}
+
 
 module.exports = router

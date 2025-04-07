@@ -7,9 +7,14 @@ const createHttpError = require("http-errors");
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { ROLES } = require('../../middlewares/admin-auth')
+const validateCaptCha = require('../../middlewares/validate-captcha')
+const {delKey} = require("../../utils/redis");
+const sendMail = require('../../utils/mail')
+const { register_mail } = require('../../template/mail')
+const {mailProducer} = require("../../utils/rabbit-mq");
 
 // 用户注册
-router.post('/sign_up', async (req, res) => {
+router.post('/sign_up', validateCaptCha, async (req, res) => {
     try {
         const keyWords = ['email', 'username', 'nickname', 'password']
         const body = {
@@ -21,6 +26,9 @@ router.post('/sign_up', async (req, res) => {
 
         const user = await User.create(body)
         delete user.dataValues.password
+
+        await delKey(req.body.captchaKey)
+        await mailProducer(register_mail(user))
 
         successResponse(res, '创建用户成功', { user }, 201)
     } catch (e) {

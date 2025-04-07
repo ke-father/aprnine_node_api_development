@@ -30,10 +30,12 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
-    content: DataTypes.TEXT
+    content: DataTypes.TEXT,
+    deletedAt: DataTypes.DATE
   }, {
     sequelize,
     modelName: 'Article',
+    paranoid: true
   });
   return Article;
 };

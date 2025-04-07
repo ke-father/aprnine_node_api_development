@@ -18,8 +18,6 @@ module.exports = async (req, res, next) => {
         // 验证token
         const { userId } = jwt.verify(token, process.env.JWT_SECRET);
 
-        console.log(userId)
-
         // 获取用户
         const user = await User.findByPk(userId);
         if (!user) throw new  createHttpError.Unauthorized('用户不存在');

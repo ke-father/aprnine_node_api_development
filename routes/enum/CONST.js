@@ -1,0 +1,1 @@
+ exports.CATEGORIES_KEY = 'CATEGORIES_KEY'

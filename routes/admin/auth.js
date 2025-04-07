@@ -41,8 +41,6 @@ router.post(`/sign_in`, async (req, res) => {
         // 验证错误
         if (!isValid) throw new  createHttpError.Unauthorized('密码错误')
 
-        console.log(user.role, ROLES.ADMIN)
-
         // 判断是否为管理员
         if (user.role !== ROLES.ADMIN) throw new  createHttpError.Unauthorized('您没有权限登陆管理员后台')
 

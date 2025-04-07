@@ -3,6 +3,7 @@ const router = express.Router()
 const { Course, Category, Chapter, User } = require('../../models')
 const { failureResponse, successResponse } = require('../../utils')
 const createHttpError = require("http-errors");
+const {getKey, setKey} = require("../../utils/redis");
 
 // 获取课程列表
 router.get('/', async (req, res) => {
@@ -23,6 +24,11 @@ router.get('/', async (req, res) => {
         // 判断是否传入分类Id
         if (!query.categoryId) throw new createHttpError.BadRequest('获取课程列表失败，分类ID不能为空')
 
+        const COURSES_KEY = `COURSES:${query.categoryId}:${pages.currentPage}:${pages.pageSize}`
+
+        let data = await getKey(COURSES_KEY)
+        if (data) return successResponse(res, '查询课程列表成功', data)
+
         // 定义查询条件
         const condition = {
             attributes: { exclude: ['CategoryId', 'UserId', 'content'] },
@@ -36,15 +42,17 @@ router.get('/', async (req, res) => {
         }
 
         const { count, rows } = await Course.findAndCountAll(condition)
-
-        successResponse(res, '查询课程列表成功', {
+        data = {
             courses: rows,
             pagination: {
                 total: count,
                 currentPage: pages.currentPage,
                 pageSize: pages.pageSize
             }
-        })
+        }
+
+        await setKey(COURSES_KEY, data)
+        successResponse(res, '查询课程列表成功', data)
     } catch (e) {
         failureResponse(res, e)
     }
@@ -54,33 +62,43 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params
-        const condition = {
+
+        // 查询课程
+        let COURSE_KEY = `COURSE_KEY:${id}`
+        let course = await getKey(COURSE_KEY)
+        // 查询数据库
+        if (!course) course = await Course.findByPk(id, {
             attributes: { exclude: ['CategoryId', 'UserId'] },
-            include: [
-                {
-                    model: Category,
-                    as: 'category',
-                    attributes: ['id', 'name']
-                },
-                {
-                    model: Chapter,
-                    as: 'chapters',
-                    attributes: ['id', 'title', 'rank', 'createdAt'],
-                    order: [['rank', 'asc'], ['id', 'desc']]
-                },
-                {
-                    model: User,
-                    as: 'user',
-                    attributes: ['id', 'username', 'nickname', 'avatar', 'company']
-                }
-            ]
-        }
-
-        const course = await Course.findByPk(id, condition)
-
+        })
         if (!course) throw new  createHttpError.NotFound(`id为${id}的课程未找到`)
+        await setKey(COURSE_KEY, course)
 
-        successResponse(res, '查询课程成功', { course })
+        // 查询课程关联分类
+        let CATEGORY_KEY = `CATEGORY_KEY:${course.categoryId}`
+        let category = await getKey(CATEGORY_KEY)
+        if (!category) category = await Category.findByPk(course.categoryId)
+        await setKey(CATEGORY_KEY, category)
+
+        // 查询课程关联用户
+        let USER_KEY = `USER_KEY:${course.userId}`
+        let user = await getKey(USER_KEY)
+        if (!user) user = await User.findByPk(course.userId, {
+            attributes: { exclude: ['password'] },
+        })
+        await setKey(USER_KEY, user)
+
+        // 查询课程关联章节
+        let CHAPTER_KEY = `CHAPTER_KEY:${course.id}`
+        let chapters = await getKey(CHAPTER_KEY)
+        if (!chapters) chapters = await Chapter.findAll({
+            attributes: { exclude: ['CourseId', 'content'] },
+            where: { courseId: course.id },
+            order: [['rank', 'ASC'], ['id', 'DESC']]
+        })
+        await setKey(CHAPTER_KEY, chapters)
+
+
+        successResponse(res, '查询课程成功', { course, category, user, chapters })
     } catch (e) {
         failureResponse(res, e)
     }

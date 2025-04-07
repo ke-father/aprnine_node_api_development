@@ -7,6 +7,8 @@ const cors = require('cors')
 // 配置环境变量
 require('dotenv').config();
 
+require('./rabbitMQ')
+
 const indexRouter = require('./routes/index');
 
 const app = express();
