@@ -4,7 +4,7 @@ const router = express.Router();
 const { Setting } = require('../../models')
 const { successResponse, failureResponse} = require('../../utils')
 const createHttpError = require("http-errors");
-const {getKey, setKey, delKey} = require("../../utils/redis");
+const {getKey, setKey, delKey, flushAll} = require("../../utils/redis");
 
 // 定义redis的key
 const SETTING_KEY = 'SETTING_KEY'
@@ -37,6 +37,15 @@ router.get('/', async (req, res) => {
         successResponse(res, '查询成功', setting)
     } catch (e) {
         failureResponse(res, e, '查询系统设置详情失败')
+    }
+})
+
+router.get('/flush-all', async (req, res) => {
+    try {
+        await flushAll()
+        successResponse(res, '清除所有缓存成功')
+    } catch (e) {
+        failureResponse(res, e)
     }
 })
 

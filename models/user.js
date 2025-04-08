@@ -17,6 +17,7 @@ module.exports = (sequelize, DataTypes) => {
       models.User.hasMany(models.Course, { as: 'courses' })
       models.User.belongsToMany(models.Course, { through: models.Like, foreignKey: 'userId', as: 'likeCourses' })
       models.User.hasMany(models.Attachment, { as: 'attachments' });
+      models.User.hasMany(models.Order, { as: 'orders' })
     }
   }
   User.init({
@@ -132,7 +133,8 @@ module.exports = (sequelize, DataTypes) => {
       validate: {
         isUrl: { msg: '请输入正确的头像链接' }
       }
-    }
+    },
+    membershipExpiredAt: DataTypes.DATE
   }, {
     sequelize,
     modelName: 'User',

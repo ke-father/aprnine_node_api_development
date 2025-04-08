@@ -23,6 +23,7 @@
     "mysql2": "^3.11.3",
     "nodemailer": "^6.10.0",
     "nodemon": "^3.1.7",
+    "number-precision": "^1.6.0",
     "redis": "^4.7.0",
     "sequelize": "^6.37.4",
     "svg-captcha": "^1.4.0",

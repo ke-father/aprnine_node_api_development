@@ -175,7 +175,7 @@ const getCourse = async (req) => {
 
 // 公共方法：白名单过滤
 const filterBody = (body) => {
-    const whiteList = ['categoryId', 'name', 'image', 'recommended', 'introduction', 'content']
+    const whiteList = ['categoryId', 'name', 'image', 'recommended', 'introduction', 'content', 'free']
 
     let returnBody = {}
     for (const key in body) {

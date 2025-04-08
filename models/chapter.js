@@ -79,7 +79,13 @@ module.exports = (sequelize, DataTypes) => {
                 get () {
                     return moment(this.getDataValue(Chapter.updatedAt)).format('LL')
                 }
-            }
+            },
+            free: {
+                type: DataTypes.BOOLEAN,
+                validate: {
+                    isIn: { args: [[true, false]], msg: '是否免费章节的值必须是，推荐：true 不推荐：false。' }
+                }
+            },
         },
         {
             sequelize,

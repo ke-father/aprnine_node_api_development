@@ -164,7 +164,7 @@ const getChapter = async (req) => {
 
 // 公共方法：白名单过滤
 const filterBody = (body) => {
-    const whiteList = ['courseId', 'title', 'content', 'video', 'rank']
+    const whiteList = ['courseId', 'title', 'content', 'video', 'rank', 'free']
 
     let returnBody = {}
     for (const key in body) {

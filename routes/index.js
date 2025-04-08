@@ -14,5 +14,7 @@ router.use('/admin', require('./admin'))
 router.use('/uploads', userAuth, require('./uploads.js'))
 // 验证码接口
 router.use('/captcha', require('./captcha.js'))
+// 订单接口
+// router.use('/', require('./order'))
 
 module.exports = router

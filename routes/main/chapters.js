@@ -17,6 +17,10 @@ router.get('/:id', async (req, res) => {
         })
         if (!chapter) throw new  createHttpError.NotFound(`id为${id}的章节未找到`)
 
+        // 检查用户是否可以浏览当前章节
+        await checkUserRole(req, chapter)
+        console.warn(111)
+
         // 查询章节关联的课程
         let COURSE_KEY = `COURSE_KEY:${chapter.courseId}`
         let course = await getKey(COURSE_KEY)
@@ -51,8 +55,19 @@ router.get('/:id', async (req, res) => {
             chapters
         })
     } catch (e) {
+        console.log(e)
         failureResponse(res, e)
     }
 })
+
+// 检查用户是否可以浏览当前章节
+const checkUserRole = async (req, chapter) => {
+    if (chapter.free) return
+
+    // 检查用户是否有权限访问
+    const allowedRoles = [1, 100]
+    const user = await User.findByPk(req.userId)
+    if (!allowedRoles.includes(user.role)) throw new createHttpError.Forbidden('您没有权限访问该章节')
+}
 
 module.exports = router

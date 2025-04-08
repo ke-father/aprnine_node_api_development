@@ -12,7 +12,7 @@ router.use('/categories', require('./categories'))
 router.use('/courses', require('./courses'))
 
 // /chapters 章节
-router.use('/chapters', require('./chapters'))
+router.use('/chapters', userAuth, require('./chapters'))
 
 // /articles 文章
 router.use('/articles', require('./articles'))
@@ -31,5 +31,11 @@ router.use('/users', userAuth, require('./user'))
 
 // /likes 点赞
 router.use('/likes', userAuth, require('./likes'))
+
+// /memberships 会员
+router.use('/memberships', require('./memberships'))
+
+// /orders 订单
+router.use('/orders', userAuth, require('./order'))
 
 module.exports = router

@@ -1,4 +1,5 @@
 'use strict';
+const moment = require('moment/moment');
 
 const bcrypt = require('bcryptjs')
 
@@ -46,6 +47,17 @@ module.exports = {
         createdAt: new Date(),
         updatedAt: new Date()
       },
+      {
+        email: 'member@clwy.cn',
+        username: 'member',
+        password: bcrypt.hashSync('123123', 10),
+        nickname: '大会员用户',
+        sex: 1,
+        role: 1,
+        membershipExpiredAt: moment().add(1, 'year').toDate(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
     ])
   },
 

@@ -5,7 +5,10 @@
     "database": "aprnine_api_development",
     "host": "127.0.0.1",
     "dialect": "mysql",
-    "timezone": "+08:00"
+    "timezone": "+08:00",
+    "dialectOptions": {
+      "decimalNumbers": true
+    }
   },
   "test": {
     "username": "root",

@@ -29,7 +29,13 @@ router.use('/auth', require('./auth'))
 // /admin/attachments 附件
 router.use('/attachments', adminAuth, require('./attachments'))
 
-// 日志
+// /admin/logs 日志
 router.use('/logs', adminAuth, require('./logs'))
+
+// /admin/memberships 大会员
+router.use('/memberships', adminAuth, require('./memberships'))
+
+// /admin/orders 订单
+router.use('/orders', adminAuth, require('./orders'))
 
 module.exports = router
